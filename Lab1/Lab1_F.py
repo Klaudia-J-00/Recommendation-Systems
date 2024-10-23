@@ -17,28 +17,6 @@ Steam has a detailed review system for games, with each review tied to a specifi
 User reviews: Reviews are detailed with specific user ratings (thumbs up/down).
 """
 import csv
-
-"""
-The task is to use Web Scrapping to get information from a website of choice, that has ratings, and users. 
-
-We need to fetch information about: 
-- Movie/Game/Book etc. ID - movie_id
-- It's link - movie_link
-- It's title - movie_title
-- General User Rating of that Movie/Game/Book etc. - general_rating (since we chose Steam we will also include recent rating)
-- Recent User Rating of that Movie/Game/Book etc. - recent_rating
-- Specific User Rating of that Movie/Game/Book etc. - user_rating
-- User ID - user_id
-
-Fetched information should be saved in .txt or .csv file.
-
-Website: https://store.steampowered.com/
-Steam has a detailed review system for games, with each review tied to a specific user.
-User reviews: Reviews are detailed with specific user ratings (thumbs up/down).
-
-THIS FILE SCRAPES INFORMATION ABOUT STEAM REVIEWS, USERS ETC FOR SPECIFIC GAME
-"""
-
 import os
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
