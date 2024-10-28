@@ -3,26 +3,6 @@ The task is to implement user-based Collaborative Filtering.
 
 We are going to use data stored in MovieLens 100K Dataset.
 Url: https://www.kaggle.com/datasets/prajitdatta/movielens-100k-dataset
-
-From the dataset webpage we learn that:
-u.data -- The full u data set, 100000 ratings by 943 users on 1682 items.
-Each user has rated at least 20 movies. Users and items are numbered consecutively from 1. The data is randomly
-ordered. This is a tab separated list of user id | item id | rating | timestamp.
-
-u.item -- Information about the items (movies); this is a tab separated list of
-movie id | movie title | release date | video release date | IMDb URL | unknown | Action | Adventure |
-Animation | Children's | Comedy | Crime | Documentary | Drama | Fantasy | Film-Noir | Horror | Musical |
-Mystery | Romance | Sci-Fi | Thriller | War | Western |
-The last 19 fields are the genres, a 1 indicates the movie is of that genre, a 0 indicates it is not; movies can be
-in several genres at once. The movie ids are the ones used in the u.data dataset.
-
-Implementation
-----------------
-First step: Convert the dataset into a user-item matrix (each row will represent a user, and each column will
-represent a movie). Nan will mean that user hasn't rated a specific movie.
-Second step: Calculate User Similarities - Cosine Similarity
-cosine_similarity(A, B) = (A dot B)/(||A|| x ||B||)
-Third step: Generate Recommendations
 """
 import numpy as np
 import pandas as pd
@@ -37,28 +17,21 @@ movie_column_names = ['item_id', 'title', 'release_date', 'video_release_date', 
                       'Film-Noir', 'Horror', 'Musical', 'Mystery', 'Romance', 'Sci-Fi', 'Thriller', 'War', 'Western']
 movies = pd.read_csv('u.item', sep='|', names=movie_column_names, usecols=['item_id', 'title'], encoding='ISO-8859-1')
 
-print("First few rows of the dataset:")
-print(data.head())
+# print("First few rows of the dataset:")
+# print(data.head())
+#
+# print("First few rows of the dataset:")
+# print(movies.head())
+#
+# # Check for any missing values
+# print("\nMissing values per column:")
+# print(data.isnull().sum())
 
-print("First few rows of the dataset:")
-print(movies.head())
-
-# Check for any missing values
-print("\nMissing values per column:")
-print(data.isnull().sum())
-
-# Getting an example movie - rating pair
-movie_id = data.loc[123, 'item_id']
-rating = data.loc[123, 'rating']
-movie_title = movies.loc[movies['item_id'] == movie_id, 'title'].values[0]
-print(f"The title of the movie rated in data[123] is: {movie_title}. The rating given to this movie is: {rating}")
-
-# First step
 user_item_matrix = data.pivot(index='user_id', columns='item_id', values='rating')
 print(user_item_matrix.head())
 print(f"Shape of user-item matrix: {user_item_matrix.shape}")
 
-# Second step
+
 def similarity(user, r):
     """
     This functions calculates cosine similarity using the following equation:
@@ -84,21 +57,20 @@ def similarity(user, r):
     return similarities
 
 
-# Third step
-def recommendation(user_id, user_item_matrix, top_n=5, n_recommendations=10):
+def recommendation(u_id, useritem_matrix, top_n=5, n_recommendations=5):
     """
     This function generates recommendations for a specific user.
 
-    :param user_id:
-    :param user_item_matrix:
-    :param top_n:
-    :param n_recommendations:
-    :return:
+    :param u_id: user ID
+    :param useritem_matrix: user-item matrix
+    :param top_n: number of top similar users to consider
+    :param n_recommendations: number of recommendations to generate
+    :return: list of recommended movie titles
     """
-    user_ratings = user_item_matrix.iloc[user_id - 1].fillna(0).values  # Fill NaN with 0 for calculations
+    user_ratings = useritem_matrix.iloc[u_id - 1].fillna(0).values  # Fill NaN with 0 for calculations
 
     # Calculate similarities with other users
-    user_similarities = similarity(user_ratings, user_item_matrix)
+    user_similarities = similarity(user_ratings, useritem_matrix)
 
     # Sort by similarity score and get top N similar users
     user_similarities.sort(reverse=True, key=lambda x: x[0])  # Sort by cosine similarity in descending order
@@ -108,25 +80,25 @@ def recommendation(user_id, user_item_matrix, top_n=5, n_recommendations=10):
     recommendations = {}
 
     for similarity_score, similar_user_index in top_similar_users:
-        similar_user_ratings = user_item_matrix.iloc[similar_user_index]
+        similar_user_ratings = useritem_matrix.iloc[similar_user_index]
 
         # Loop through items rated by similar user
-        for item_id, rating in similar_user_ratings.items():
-            if user_item_matrix.iloc[user_id - 1][item_id] == 0:  # Only consider items not rated by the target user
+        for item_id, rate in similar_user_ratings.items():
+            if pd.isna(useritem_matrix.iloc[u_id - 1][item_id]):  # Only consider items not rated by the target user
                 if item_id not in recommendations:
                     recommendations[item_id] = 0  # Initialize if not already in dictionary
-                recommendations[item_id] += rating * similarity_score  # Weighted rating
+                recommendations[item_id] += rate * similarity_score  # Weighted rating
 
     # Sort recommendations by score
     recommended_movies = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)
 
     # Get the top N recommendations
-    recommended_movie_ids = [movie_id for movie_id, score in recommended_movies[:n_recommendations]]
+    recommended_movie_id = [movie_ids for movie_ids, score in recommended_movies[:n_recommendations]]
+    recommended_movie_titles = movies[movies['item_id'].isin(recommended_movie_id)]['title'].tolist()
 
-    return recommended_movie_ids
-
+    return recommended_movie_titles
 
 # Example usage
-user_id = 2  # For example, user ID 1
+user_id = 2
 recommended_movie_ids = recommendation(user_id, user_item_matrix)
 print(f"Recommended movies for User {user_id}: {recommended_movie_ids}")
